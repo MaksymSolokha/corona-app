@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 
 import { Container } from './styles'
 import type { BoxProps } from '@mui/material'
@@ -14,6 +14,9 @@ const Home: FC<BoxProps> = ({ ...props }) => {
     'https://covid-api.com/api/regions?order=iso&sort=desc',
     fetcher
   )
+  useEffect(() => {
+    setCountry(data?.data.map((item) => item.name))
+  }, [data])
 
   const categoryMenu = ['Confirmed', 'Death', 'Recovered']
 
@@ -27,7 +30,7 @@ const Home: FC<BoxProps> = ({ ...props }) => {
         }}
       >
         <DropDown placeholder={'Category'} dropDownMenu={categoryMenu} />
-        <DropDown placeholder={'Category'} dropDownMenu={categoryMenu} />
+        <DropDown placeholder={'Country'} dropDownMenu={country} />
       </Filters>
       <Chart />
     </Container>

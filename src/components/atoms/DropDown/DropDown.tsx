@@ -15,6 +15,8 @@ const DropDown: FC<IDropDown> = ({ placeholder, dropDownMenu }) => {
     setDropDown(event.target.value as string)
   }
 
+  console.log(dropDown)
+
   return (
     <Box
       sx={{
@@ -30,7 +32,7 @@ const DropDown: FC<IDropDown> = ({ placeholder, dropDownMenu }) => {
           label="case"
           onChange={handleChange}
         >
-          {dropDownMenu.map((item) => (
+          {dropDownMenu?.map((item) => (
             <MenuItem key={item} value={item}>
               {item}
             </MenuItem>

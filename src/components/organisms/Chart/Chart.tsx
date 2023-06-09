@@ -9,7 +9,6 @@ import {
   Tooltip,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
-import { Box } from '@mui/material'
 
 ChartJS.register(
   CategoryScale,
@@ -74,13 +73,5 @@ export const data = {
 }
 
 export default function App() {
-  return (
-    <Box
-      sx={{
-        width: 'auto',
-      }}
-    >
-      <Line options={options} data={data} />
-    </Box>
-  )
+  return <Line options={options} data={data} />
 }
