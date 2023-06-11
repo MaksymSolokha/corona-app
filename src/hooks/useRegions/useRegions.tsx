@@ -1,11 +1,6 @@
 import useSWRImmutable from 'swr/immutable'
 import { REGIONS_URL } from '../../constants/constants.ts'
-import { TypeResponse } from '../../types/types.ts'
-
-type Region = {
-  iso: string
-  name: string
-}
+import { Region, TypeResponse } from '../../types/types.ts'
 
 export const useRegions = () => {
   const {

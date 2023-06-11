@@ -2,6 +2,7 @@ import {
   CategoryScale,
   Chart as ChartJS,
   ChartData,
+  ChartOptions,
   Legend,
   LinearScale,
   LineElement,
@@ -10,16 +11,12 @@ import {
   Tooltip,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
-import { useSearchParams } from 'react-router-dom'
 import dayjs from 'dayjs'
-import {
-  CASE,
-  COUNTRY,
-  END_DATE,
-  START_DATE,
-} from '../../../constants/constants.ts'
-import useReports from '../../../hooks/useReports'
 import { formatDate } from '../../../utils/utils.ts'
+import { IProps } from './types.ts'
+import { FC, useMemo } from 'react'
+import { Case } from '../../../types/types.ts'
+import theme from '../../../styles/theme.ts'
 
 ChartJS.register(
   CategoryScale,
@@ -31,7 +28,7 @@ ChartJS.register(
   Legend
 )
 
-export const options = {
+const options: ChartOptions<'line'> = {
   responsive: true,
   plugins: {
     legend: {
@@ -44,77 +41,50 @@ export const options = {
   },
 }
 
-export default function Chart() {
-  const [searchParams] = useSearchParams()
-  const startDay = dayjs(searchParams.get(START_DATE) || '2023-06-01')
-  const endDay = dayjs(searchParams.get(END_DATE) || Date.now())
-  const appliedCase = searchParams.get(CASE) || 'confirmed'
-  const country = searchParams.get(COUNTRY) || 'UKR'
-
-  const { data: reports } = useReports(
-    formatDate(startDay),
-    formatDate(endDay),
-    country
-  )
-
-  const date: string[] | 0 = reports.map((item) => item.data.date)
-  const confirmed: number[] | 0 = reports.map((item) => item.data.confirmed)
-  const recovered: number[] | 0 = reports.map((item) => item.data.recovered)
-  const death: number[] | 0 = reports.map((item) => item.data.deaths)
-
-  const deathChart = {
-    labels: date,
-    datasets: [
-      {
-        label: 'Deaths',
-        data: death,
-        borderColor: 'rgb(255, 99, 132)',
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-      },
-    ],
-  }
-  const confirmedChart = {
-    labels: date,
-    datasets: [
-      {
-        label: 'Confirmed',
-        data: confirmed,
-        borderColor: 'rgb(79,160,255)',
-        backgroundColor: 'rgba(99,172,255,0.5)',
-      },
-    ],
-  }
-  const recoveredChart = {
-    labels: date,
-    datasets: [
-      {
+const getDataVariant = (appliedCase: Case) => {
+  switch (appliedCase) {
+    case 'recovered':
+      return {
         label: 'Recovered',
-        data: recovered,
-        borderColor: 'rgb(143,255,99)',
-        backgroundColor: 'rgba(152,255,148,0.5)',
-      },
-    ],
+        borderColor: theme.palette.success.light,
+        backgroundColor: theme.palette.success.dark,
+      }
+    case 'confirmed':
+      return {
+        label: 'Confirmed',
+        borderColor: theme.palette.info.light,
+        backgroundColor: theme.palette.info.dark,
+      }
+    case 'deaths':
+      return {
+        label: 'Deaths',
+        borderColor: theme.palette.error.light,
+        backgroundColor: theme.palette.error.dark,
+      }
+    default:
+      return {
+        label: 'Recovered',
+        borderColor: theme.palette.success.light,
+        backgroundColor: theme.palette.success.dark,
+      }
   }
-
-  const setChart = (options: string): ChartData<'line'> => {
-    if (options === 'confirmed') {
-      return confirmedChart
-    }
-    if (options === 'deaths') {
-      return deathChart
-    }
-    if (options === 'recovered') {
-      return recoveredChart
-    }
-    return confirmedChart
-  }
-
-  return (
-    <Line
-      width={'100px'}
-      height={'50px'}
-      options={{ maintainAspectRatio: true }}
-      data={setChart(appliedCase)}
-    />
-  )
 }
+
+const Chart: FC<IProps> = ({ dates, reports, appliedCase }) => {
+  const data: ChartData<'line'> = useMemo(
+    () => ({
+      labels: dates.map((date) => formatDate(dayjs(date))),
+      datasets: [
+        {
+          data: reports.map((report) => report[appliedCase] || 0),
+          ...getDataVariant(appliedCase),
+        },
+      ],
+    }),
+    [appliedCase, dates, reports]
+  )
+
+  return <Line options={options} data={data} />
+}
+
+export default Chart

@@ -3,22 +3,27 @@ import { useMemo } from 'react'
 import { REPORTS_URL } from '../../constants/constants.ts'
 import { formatDate } from '../../utils/utils.ts'
 import useMultipleData from '../useMultipleData'
+import { Report, TypeResponse } from '../../types/types.ts'
 
-const DATES_NUMBER = 15
-function getDatesInRange(startDate: string, endDate: string) {
-  const date = new Date(new Date(startDate).getTime())
+const DATES_NUMBER = 20
+function getDatesInRange(startDate: dayjs.Dayjs, endDate: dayjs.Dayjs) {
+  const dates: dayjs.Dayjs[] = []
 
-  const dates: Date[] = []
+  let currentDate = startDate
 
-  while (date <= new Date(endDate)) {
-    dates.push(new Date(date))
-    date.setDate(date.getDate() + 1)
+  while (
+    currentDate.isBefore(endDate, 'day') ||
+    currentDate.isSame(endDate, 'day')
+  ) {
+    dates.push(currentDate)
+    currentDate = currentDate.add(1, 'day')
   }
+
   if (dates.length <= DATES_NUMBER) return dates
 
   const indexStep = dates.length / DATES_NUMBER
 
-  const filteredDates: Date[] = []
+  const filteredDates: dayjs.Dayjs[] = []
 
   Array.from(Array(DATES_NUMBER)).forEach((_, index) =>
     filteredDates.push(dates[Math.round(indexStep * index)])
@@ -27,13 +32,22 @@ function getDatesInRange(startDate: string, endDate: string) {
   return filteredDates
 }
 
-export const useReports = (startDate: string, endDate: string, iso: string) => {
-  const urls = useMemo(
-    () =>
-      getDatesInRange(startDate, endDate).map((date) =>
-        REPORTS_URL(formatDate(dayjs(date)), iso)
-      ),
-    [startDate, endDate, iso]
+export const useReports = (
+  startDate: dayjs.Dayjs,
+  endDate: dayjs.Dayjs,
+  iso?: string
+) => {
+  const startDateKey = startDate.toString()
+  const endDateKey = endDate.toString()
+  const dates = useMemo(
+    () => getDatesInRange(startDate, endDate),
+    [startDateKey, endDateKey]
   )
-  return useMultipleData(urls)
+  const urls = useMemo(
+    () => dates.map((date) => REPORTS_URL(formatDate(date), iso)),
+    [dates, iso]
+  )
+  const { data, ...rest } = useMultipleData<TypeResponse<Report>>(urls)
+  const reports = useMemo(() => data.map(({ data }) => data), [data])
+  return { dates, reports, ...rest }
 }

@@ -2,7 +2,12 @@ export type TypeResponse<T> = {
   data: T
 }
 
-export type ResponseData = {
+export type Region = {
+  iso: string
+  name: string
+}
+
+export type Report = {
   active: number
   active_diff: number
   confirmed: number
@@ -15,3 +20,5 @@ export type ResponseData = {
   recovered: number
   recovered_diff: number
 }
+
+export type Case = 'confirmed' | 'deaths' | 'recovered'
