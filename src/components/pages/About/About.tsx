@@ -1,13 +1,17 @@
 import { FC } from 'react'
+import { Box, Typography } from '@mui/material'
 
-import { Container } from './styles'
-import { Typography } from '@mui/material'
-
-const About: FC = ({ ...props }) => {
+const About: FC = () => {
   return (
-    <Container {...props}>
-      <Typography variant="h1">About</Typography>
-    </Container>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: 10,
+      }}
+    >
+      <Typography variant="h2">Created by: Solokha Maksym</Typography>
+    </Box>
   )
 }
 

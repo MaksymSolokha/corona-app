@@ -1,6 +1,7 @@
 import {
   CategoryScale,
   Chart as ChartJS,
+  ChartData,
   Legend,
   LinearScale,
   LineElement,
@@ -9,6 +10,16 @@ import {
   Tooltip,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
+import { useSearchParams } from 'react-router-dom'
+import dayjs from 'dayjs'
+import {
+  CASE,
+  COUNTRY,
+  END_DATE,
+  START_DATE,
+} from '../../../constants/constants.ts'
+import useReports from '../../../hooks/useReports'
+import { formatDate } from '../../../utils/utils.ts'
 
 ChartJS.register(
   CategoryScale,
@@ -33,45 +44,77 @@ export const options = {
   },
 }
 
-const labels = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-]
+export default function Chart() {
+  const [searchParams] = useSearchParams()
+  const startDay = dayjs(searchParams.get(START_DATE) || '2023-06-01')
+  const endDay = dayjs(searchParams.get(END_DATE) || Date.now())
+  const appliedCase = searchParams.get(CASE) || 'confirmed'
+  const country = searchParams.get(COUNTRY) || 'UKR'
 
-export const data = {
-  labels,
-  datasets: [
-    {
-      label: 'one',
-      data: labels.map(() => Math.random() * 2000 - 1000),
-      borderColor: 'rgb(255, 99, 132)',
-      backgroundColor: 'rgba(255, 99, 132, 0.5)',
-    },
-    {
-      label: 'two',
-      data: labels.map(() => Math.random() * 2000 - 1000),
-      borderColor: 'rgb(53, 162, 235)',
-      backgroundColor: 'rgba(53, 162, 235, 0.5)',
-    },
-    {
-      label: 'three',
-      data: labels.map(() => Math.random() * 2000 - 1000),
-      borderColor: 'rgb(92,235,53)',
-      backgroundColor: 'rgba(147,234,135,0.5)',
-    },
-  ],
-}
+  const { data: reports } = useReports(
+    formatDate(startDay),
+    formatDate(endDay),
+    country
+  )
 
-export default function App() {
-  return <Line options={options} data={data} />
+  const date: string[] | 0 = reports.map((item) => item.data.date)
+  const confirmed: number[] | 0 = reports.map((item) => item.data.confirmed)
+  const recovered: number[] | 0 = reports.map((item) => item.data.recovered)
+  const death: number[] | 0 = reports.map((item) => item.data.deaths)
+
+  const deathChart = {
+    labels: date,
+    datasets: [
+      {
+        label: 'Deaths',
+        data: death,
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      },
+    ],
+  }
+  const confirmedChart = {
+    labels: date,
+    datasets: [
+      {
+        label: 'Confirmed',
+        data: confirmed,
+        borderColor: 'rgb(79,160,255)',
+        backgroundColor: 'rgba(99,172,255,0.5)',
+      },
+    ],
+  }
+  const recoveredChart = {
+    labels: date,
+    datasets: [
+      {
+        label: 'Recovered',
+        data: recovered,
+        borderColor: 'rgb(143,255,99)',
+        backgroundColor: 'rgba(152,255,148,0.5)',
+      },
+    ],
+  }
+
+  const setChart = (options: string): ChartData<'line'> => {
+    if (options === 'confirmed') {
+      return confirmedChart
+    }
+    if (options === 'deaths') {
+      return deathChart
+    }
+    if (options === 'recovered') {
+      return recoveredChart
+    }
+    return confirmedChart
+  }
+
+  return (
+    <Line
+      width={'100px'}
+      height={'50px'}
+      options={{ maintainAspectRatio: true }}
+      data={setChart(appliedCase)}
+    />
+  )
 }
